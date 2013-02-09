@@ -1,24 +1,19 @@
-int rows = 10;
+int rows = 20;
 int waves = 6;
 
-int waveSize = 50;
+int waveSize = 25;
 
 int padding = 50;
-int thickness = 5;
+int thickness = 2;
 
 boolean border = true;
-int borderPadding = 25;
+int borderPadding = 4;
 int borderThickness = 5;
 
 void setup() {
-
   size((padding*2) + waveSize * waves, (padding*2) + waveSize * rows + borderPadding);
 
   background(255);
-
-  strokeWeight(thickness);
-
-  noFill();
 
   // // This code makes the basic triangle wave:
   //  beginShape();
@@ -33,36 +28,47 @@ void setup() {
 
   translate(padding, padding);
 
+  // ** Draw the border **
+
+  if (border) {
+    strokeWeight(borderThickness);
+    rect(0, waveSize/4, width-(2*padding), height-(2*padding));
+  }
+
+  strokeWeight(thickness);
+  
+  fill(255);
+
   for (int r = 0; r < rows; r++) {
-    float curve = 25 * ((float) r / (rows-1));
+    float curve = (waveSize/3) * ((float) r / (rows-1));
     
     float offset = random(waveSize);
     offset = waveSize/2;
     
-    for (int c = 0; c < waves+1; c++) {
-      pushMatrix();
-      translate((waveSize*c) - offset, waveSize * r);
+    pushMatrix();
+    
+    translate(0, waveSize * r - (waveSize/2));
+    
+    beginShape();
+    
+    for (int c = 0; c < waves; c++) {
+      float co = c * waveSize; 
       
-      beginShape();
-      vertex(0, 0);
-      bezierVertex(0, 0, (waveSize/2)-curve, waveSize/2, waveSize/2, waveSize/2);
-      bezierVertex((waveSize/2)+curve, waveSize/2, waveSize, 0, waveSize, 0);
-      endShape();
+      vertex(co, waveSize);
+      bezierVertex(co+curve, waveSize, co+(waveSize/2), waveSize/2, co+(waveSize/2), waveSize/2);
+      bezierVertex(co+(waveSize/2), waveSize/2, co+waveSize-curve, waveSize, co+waveSize, waveSize);
 
-      popMatrix();
+
+//      bezierVertex(co, 0, co+(waveSize/2)-curve, waveSize/2, co+(waveSize/2), waveSize/2);
+//      bezierVertex(co+(waveSize/2)+curve, waveSize/2, co+waveSize, 0, co+waveSize, 0);
     }
+    
+    endShape();
+    
+    popMatrix();
   }
 
   popMatrix();
-
-  fill(255);
-  noStroke();
-  
-  rect(0, 0, padding, height);
-  rect(width-padding, 0, padding, height);
-  
-  noFill();
-  stroke(0);
 
   pushMatrix();
 
@@ -71,7 +77,9 @@ void setup() {
   if (border) {
     strokeWeight(borderThickness);
     
-    rect(0, 10, width-(2*padding), height-(2*padding));
+//    rect(0, 10, width-(2*padding), height-(2*padding));
+    
+    noFill();
     
 //    beginShape();
 //    vertex(0, 0);
@@ -90,5 +98,7 @@ void setup() {
   //  vertex(200, 100);
   //  bezierVertex(200, 100, 250, 150, 300, 100);
   //  endShape();
+  
+  noLoop();
 }
 

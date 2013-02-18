@@ -6,11 +6,15 @@ float a3;
 
 float a1s, a2s, a3s;
 
-float dphi[] = { PI/3, PI/3, PI/3, PI/3, 2*PI/3, 2*PI/3, 2*PI/3, 2*PI/3 };
-float dtheta[] = { 0, PI/2, PI, 3*PI/2, 0, PI/2, PI, 3*PI/2 };
-float r = 100;
+int run = 0;
+float sideA = 312*PI/1024; // approx equal...
+float sideB = PI-sideA;
 
-float padding = 0.2;
+float dphi[] = { sideA, sideA, sideA, sideA, sideB, sideB, sideB, sideB };
+float dtheta[] = { 0, PI/2, PI, 3*PI/2, 0, PI/2, PI, 3*PI/2 };
+float r = 150;
+
+float padding = 0.15;
 
 boolean pause = false;
 
@@ -40,7 +44,7 @@ int facesIdx[][] = {
 
 void setup() {
 //  size(400, 400, P3D);
-  size(400, 400);
+  size(500, 500);
   
   a1 = random(2 * PI);
 //  a2 = random(2 * PI);
@@ -70,13 +74,13 @@ void rotate(float[] p, float phi, float theta, float psi) {
 }
 
 void computeCorner(int idx) {
-  float x = r * cos(dtheta[idx]) * sin(dphi[idx]);
-  float y = r * sin(dtheta[idx]) * sin(dphi[idx]);
+  float x = r * cos(a1 + dtheta[idx]) * sin(dphi[idx]);
+  float y = r * sin(a1 + dtheta[idx]) * sin(dphi[idx]);
   float z = r * cos(dphi[idx]);
   
   float[] p = { x, y, z };
   
-  rotate(p, a1, a2, a3);
+  rotate(p, PI/5, 0, PI/5);
   
   cornerX[idx] = p[0];
   cornerY[idx] = p[1];
@@ -88,7 +92,7 @@ void draw() {
   
   float cx = width / 2.0;
   float cy = height / 2.0;
-
+  
   for (int i = 0; i < dphi.length; i++) {
     computeCorner(i);
   }
@@ -113,7 +117,7 @@ void draw() {
   
   fill(0);
   
-  text("boxysean", cx-120, cy + r + 45);
+  text("boxysean", cx-120, cy+r+45);
 }
 
 void keyPressed() {

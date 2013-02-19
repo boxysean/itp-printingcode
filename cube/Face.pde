@@ -30,21 +30,18 @@ class Face implements Comparable<Face> {
   }
   
   void draw() {
-    // now the next thing to do is to creep a little in on the cube in 3d space and project it back into 2d space
+    draw(faceColor);
+  }
+  
+  void draw(int faceColor) {
+    // setup the drawing
     stroke(255);
-    strokeWeight(5);
+    strokeWeight(1);
+    strokeCap(SQUARE);
+//    noStroke();
     fill(255);
-    beginShape();
     
-    for (int i = 0; i < corners.length; i++) {
-      vertex(cornerX[corners[i]], cornerY[corners[i]]);
-    }
-    
-    endShape();
-    
-    noStroke();
-    fill(faceColor);
-    beginShape();
+    // setup the avging of the face
     
     float avgX = 0.0;
     float avgY = 0.0;
@@ -56,6 +53,24 @@ class Face implements Comparable<Face> {
     
     avgX /= corners.length;
     avgY /= corners.length;
+    
+    // draw the outside (white) face
+    
+    beginShape();
+    
+    for (int i = 0; i < corners.length; i++) {
+      vertex(cornerX[corners[i]], cornerY[corners[i]]);
+    }
+    
+    endShape(CLOSE);
+    
+    // setup the inside face
+    
+    noStroke();
+    fill(faceColor);
+    beginShape();
+    
+    // draw the inside (coloured) face
     
     for (int i = 0; i < corners.length; i++) {
       vertex(cornerX[corners[i]] * (1 - padding) + avgX * padding, cornerY[corners[i]] * (1 - padding) + avgY * padding);

@@ -1,4 +1,15 @@
 import geomerative.*;
+import processing.pdf.*;
+
+import pbox2d.*;
+import org.jbox2d.common.*;
+import org.jbox2d.dynamics.joints.*;
+import org.jbox2d.collision.shapes.*;
+import org.jbox2d.collision.shapes.Shape;
+import org.jbox2d.common.*;
+import org.jbox2d.dynamics.*;
+import org.jbox2d.dynamics.contacts.*;
+
 
 // TRY:
 // - rounding corners of the screen
@@ -10,213 +21,34 @@ import geomerative.*;
 // TODO:
 // - prevent certain angles
 
+PBox2D box2d;
+
+ArrayList<Laptop> laptops = new ArrayList<Laptop>();
+ArrayList<Boundary> boundaries = new ArrayList<Boundary>();
+
 void setup() {
   size(1000, 800);
 
   RG.init(this);
 
   smooth();
-  noLoop();
-}
-
-//void drawPolygon(float... c) {
-//  beginShape();
-//  
-//  for (int i = 0; i < c.length; i += 2) {
-//    vertex(c[i], c[i+1]);
-//  }
-//  
-//  endShape(CLOSE);
-//}
-
-float minX, maxX, minY, maxY;
-
-void setLaptopBoundaries(float minXX, float maxXX, float minYY, float maxYY) {
-  minX = minXX;
-  maxX = maxXX;
-  minY = minYY;
-  maxY = maxYY;
-}
-
-boolean closePolygon = true;
-
-void closePolygon(boolean b) {
-  closePolygon = b;
-}
-
-void drawPolygon(float... c) {
-  RShape p = new RShape();
-
-  p.addMoveTo(c[0], c[1]);
-
-  int end = c.length+1;
+//  noLoop();
   
-  if (!closePolygon) {
-    end--;
-  }
-
-  for (int i = 2; i < end; i += 2) {
-    p.addLineTo(c[i%c.length], c[(i+1)%c.length]);
-  }
-
-  RG.setPolygonizer(RG.UNIFORMLENGTH);
-  RG.setPolygonizerLength(10);
-  RPoint[] points = p.getPoints();
-
-  beginShape();
-  float px = random(0.1, 0.3);
-  float py = random(0.1, 0.3);
-  float amp = 10;
-  for (int i = 0; i < points.length; i++) {
-    float x = points[i].x + amp * noise(px);
-    float y = points[i].y + amp * noise(py);
-    px += 0.03;
-    py += 0.03;
-    vertex(x, y);
-  }
-  endShape();
-}
-
-void drawLaptop(float x, float y, float angle, float w, float h, float r, 
-float keyboardPaddingPercent, float keyboardSizePercent, float keyboardThickness, 
-float keyboardRows, float keyboardColumns, float trackpadPaddingPercent, float screenPaddingPercent) {
-  pushMatrix();
-  translate(width / 2, height / 2);
-  translate(x, y);
-  rotate(r);
-
-  float modAngle = angle % (2*PI);
   
-  float xx = h * cos(angle);
-  float yy = h * sin(angle);
+  // Initialize box2d physics and create the world
+  box2d = new PBox2D(this);
+  box2d.createWorld();
+
+  // Turn on collision listening!
+  box2d.listenForCollisions();
   
-  float minX = -w/2.0;
-  float maxX = xx+w/2.0;
-  float minY = -h;
-  float maxY = yy;
-
-  setLaptopBoundaries(minX, maxX, minY, maxY);
-
-  // keyboard base
-  //  float keyboardThickness = 10;
-
-  if (0 < modAngle && modAngle <= PI) {
-    drawPolygon(-w/2.0, 0, 
-    -w/2.0, keyboardThickness, 
-    xx-w/2.0, yy + keyboardThickness, 
-    xx-w/2.0, yy);
-
-    drawPolygon(xx+w/2.0, yy, 
-    xx+w/2.0, yy + keyboardThickness, 
-    w/2.0, keyboardThickness, 
-    w/2.0, 0);
-
-    drawPolygon(xx-w/2.0, yy, 
-    xx-w/2.0, yy + keyboardThickness, 
-    xx+w/2.0, yy + keyboardThickness, 
-    xx+w/2.0, yy);
-  } 
-  else {
-    drawPolygon(xx-w/2.0, yy, 
-    xx-w/2.0, yy + keyboardThickness, 
-    xx+w/2.0, yy + keyboardThickness, 
-    xx+w/2.0, yy);
-
-    drawPolygon(-w/2.0, 0, 
-    -w/2.0, keyboardThickness, 
-    xx-w/2.0, yy + keyboardThickness, 
-    xx-w/2.0, yy);
-
-    drawPolygon(xx+w/2.0, yy, 
-    xx+w/2.0, yy + keyboardThickness, 
-    w/2.0, keyboardThickness, 
-    w/2.0, 0);
+  for (int i = 0; i < 2; i++) {
+    makeOneLaptop();
   }
-
-  drawPolygon(-w/2.0, 0, 
-  xx-w/2.0, yy, 
-  xx+w/2.0, yy, 
-  w/2.0, 0);
-
-  // keyboard crosshatch
-  //  float keyboardPaddingPercent = 0.05;
-  //  float keyboardSizePercent = 0.5;
-  //  float keyboardRows = 4;
-  //  float keyboardColumns = 10;
-
-  float keytlx = -w/2.0 + (h * keyboardPaddingPercent) * cos(angle) + (w * keyboardPaddingPercent);
-  float keytrx = w/2.0 + (h * keyboardPaddingPercent) * cos(angle) - (w * keyboardPaddingPercent);
-  float keyblx = -w/2.0 + (h * keyboardSizePercent) * cos(angle) + (w * keyboardPaddingPercent);
-  float keybrx = w/2.0 + (h * keyboardSizePercent) * cos(angle) - (w * keyboardPaddingPercent);
-
-  float keyty = h * keyboardPaddingPercent * sin(angle);
-  float keyby = h * keyboardSizePercent * sin(angle);  
-
-  drawPolygon(keytlx, keyty, 
-  keytrx, keyty, 
-  keybrx, keyby, 
-  keyblx, keyby);
   
-  for (int i = 1; i < keyboardRows; i++) {
-    float keyrowy = (keyby - keyty) * ((float) i / keyboardRows) + keyty;
-    float keyrowlx = (keyblx - keytlx) * ((float) i / keyboardRows) + keytlx;
-    float keyrowrx = (keybrx - keytrx) * ((float) i / keyboardRows) + keytrx;
-//    line(keyrowlx, keyrowy, keyrowrx, keyrowy);
-    closePolygon(false);
-    drawPolygon(keyrowlx, keyrowy, keyrowrx, keyrowy);
-    closePolygon(true);
-  }
-
-  for (int i = 1; i < keyboardColumns; i++) {
-    float keycoltx = (keytrx - keytlx) * ((float) i / keyboardColumns) + keytlx;
-    float keycolbx = (keybrx - keyblx) * ((float) i / keyboardColumns) + keyblx;
-//    line(keycoltx, keyty, keycolbx, keyby);
-    closePolygon(false);
-    drawPolygon(keycoltx, keyty, keycolbx, keyby);
-    closePolygon(true);
-  }
-
-  // trackpad
-  //  float trackpadPaddingPercent = 0.05;
-  float trackpadSizePercent = 1.0 - keyboardSizePercent;
-  float trackpadSizeRatio = 1.0;
-
-  float trackpadh = h * (trackpadSizePercent - 2 * trackpadPaddingPercent);
-  float trackpadw = trackpadh * trackpadSizeRatio;
-  float trackpadby = h * (1.0 - trackpadPaddingPercent) * sin(angle);
-  float trackpadty = h * (1.0 - trackpadSizePercent + trackpadPaddingPercent * 2) * sin(angle);
-
-  float trackpadtlx = h * (1.0 - trackpadSizePercent + trackpadPaddingPercent * 2) * cos(angle) - trackpadw/2.0;
-  float trackpadtrx = h * (1.0 - trackpadSizePercent + trackpadPaddingPercent * 2) * cos(angle) + trackpadw/2.0;
-  float trackpadblx = h * (1.0 - trackpadPaddingPercent) * cos(angle) - trackpadw/2.0;
-  float trackpadbrx = h * (1.0 - trackpadPaddingPercent) * cos(angle) + trackpadw/2.0;
-
-  drawPolygon(trackpadtlx, trackpadty, 
-  trackpadtrx, trackpadty, 
-  trackpadbrx, trackpadby, 
-  trackpadblx, trackpadby);
-
-  //  line(0, 0, cos(angle) * h, sin(angle) * h);
-  //  line(cos(angle) * h / 2.0 - w/4.0, sin(angle) * h / 2.0, cos(angle) * h - w/4.0, sin(angle) * h);
-
-  // screen
-  fill(#FFFFFF);
-  //  float screenPaddingPercent = 0.05;
-
-  if (0 < modAngle && modAngle <= PI) {
-    drawPolygon(-w/2.0, -h, w/2.0, -h, w/2.0, 0, -w/2.0, 0);
-//    rect(-w/2.0, -h, w, h);
-    drawPolygon(-w/2.0 * (1-screenPaddingPercent), -h * (1-screenPaddingPercent),
-                w/2.0 * (1-screenPaddingPercent), -h * (1-screenPaddingPercent),
-                w/2.0 * (1-screenPaddingPercent), -h * screenPaddingPercent,
-                -w/2.0 * (1-screenPaddingPercent), -h * screenPaddingPercent);
-//    rect(-w/2.0 * (1-screenPaddingPercent), -h * (1-screenPaddingPercent), w * (1-screenPaddingPercent), h * (1-2*screenPaddingPercent));
-  } 
-  else {
-    rect(-w/2.0, -h, w, h + keyboardThickness);
-  }
-
-  popMatrix();
+  boundaries.add(new Boundary(0, 0, 10, height));
+  boundaries.add(new Boundary(width-10, 0, 10, height));
+  boundaries.add(new Boundary(0, height-10, width, 10));
 }
 
 void drawManyLaptops() {
@@ -238,18 +70,22 @@ void drawManyLaptops() {
 
     float screenPaddingPercent = random(0.05, 0.15);
 
-    drawLaptop(x, y, angle, w, h, r, 
+    Laptop laptop = new Laptop(x, y, angle, w, h, r, 
     keyboardPaddingPercent, keyboardSizePercent, keyboardThickness, 
-    keyboardRows, keyboardColumns, trackpadPaddingPercent, screenPaddingPercent);
+    keyboardRows, keyboardColumns, trackpadPaddingPercent, screenPaddingPercent, false);
+    
+    laptop.draw();
   }
 }
 
-void drawOneLaptop() {
-  float x = 0;
+void makeOneLaptop() {
+  float x = random(0, width);
   float y = 0;
-  float angle = PI/4.0;
-  float w = random(300, 400);
-  float h = random(200, w-10);
+  float angle = PI/3.0;
+  float w = 80;
+  float h = 60;
+//  float w = random(300, 400);
+//  float h = random(200, w-10);
   float r = 0;
 
   float keyboardPaddingPercent = random(0.03, 0.10);
@@ -262,15 +98,63 @@ void drawOneLaptop() {
 
   float screenPaddingPercent = random(0.05, 0.15);
 
-  drawLaptop(x, y, angle, w, h, r, 
+  laptops.add(new Laptop(x, y, angle, w, h, r, 
   keyboardPaddingPercent, keyboardSizePercent, keyboardThickness, 
-  keyboardRows, keyboardColumns, trackpadPaddingPercent, screenPaddingPercent);
+  keyboardRows, keyboardColumns, trackpadPaddingPercent, screenPaddingPercent, false));
+}
+
+void drawRotatingLaptop() {
+  float x = 0;
+  float y = 0;
+  float angle = PI/4.0;
+  float w = 300;
+  float h = 200;
+  float r = 0;
+
+  float keyboardPaddingPercent = 0.05;
+  float keyboardSizePercent = 0.5;
+
+  float keyboardThickness = 5;
+  float keyboardRows = (int) 4;
+  float keyboardColumns = (int) 12;
+  float trackpadPaddingPercent = 0.05;
+
+  float screenPaddingPercent = 0.1;
+
+  Laptop laptop = new Laptop(x, y, angle, w, h, r, 
+  keyboardPaddingPercent, keyboardSizePercent, keyboardThickness, 
+  keyboardRows, keyboardColumns, trackpadPaddingPercent, screenPaddingPercent, true);
+  
+  laptop.draw();
 }
 
 void draw() {
+//  beginRecord(PDF, "laptopz.pdf");
   background(#FFFFFF);
 
+  box2d.step();
+
 //  drawOneLaptop();
-  drawManyLaptops();
+//  drawRotatingLaptop();
+//  drawManyLaptops();
+
+  for (Laptop laptop : laptops) {
+    laptop.draw();
+  }
+
+  for (Boundary boundary : boundaries) {
+    boundary.display();
+  }
+
+//  endRecord();
+}
+
+// Collision event functions!
+void beginContact(Contact cp) {
+}
+
+
+// Objects stop touching each other
+void endContact(Contact cp) {
 }
 

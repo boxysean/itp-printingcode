@@ -1,22 +1,39 @@
+import processing.pdf.*;
+
 import geomerative.*;
-
-// TRY:
-// - rounding corners of the screen
-
-// JIGGLE:
-// - keyboard
-// - overdrawing / underdrawing keyboard crosshatches
 
 // TODO:
 // - prevent certain angles
 
+void findGoodNoiseSeed() {
+  float diff = 0;
+
+  do {
+    noiseSeed((int) random(1 << 20));
+    
+    float amp = 20;
+    
+    float before = amp * noise(0.99);
+    float after = amp * noise(0.0);
+    
+    diff = abs(before - after);
+//    System.out.printf("before %.2f after %.2f\n", amp * noise(0.99), amp * noise(0.00));
+    
+//    if (diff > 1.5) {
+//      System.out.printf("diffff %.2f\n", diff);
+//    }
+  } while (diff > 1.5);
+}
+
 void setup() {
-  size(1000, 800);
+  size(1200, 1200);
 
   RG.init(this);
+  
+  findGoodNoiseSeed();
 
   smooth();
-  noLoop();
+//  noLoop();
 }
 
 //void drawPolygon(float... c) {
@@ -60,20 +77,32 @@ void drawPolygon(float... c) {
   }
 
   RG.setPolygonizer(RG.UNIFORMLENGTH);
-  RG.setPolygonizerLength(10);
+  RG.setPolygonizerLength(4);
   RPoint[] points = p.getPoints();
 
   beginShape();
-  float px = random(0.1, 0.3);
-  float py = random(0.1, 0.3);
-  float amp = 10;
+  float px = 0.0;
+  float py = 0.0;
+  float amp = 25;
+  
+  boolean over = false;
+  
   for (int i = 0; i < points.length; i++) {
     float x = points[i].x + amp * noise(px);
     float y = points[i].y + amp * noise(py);
     px += 0.03;
     py += 0.03;
+    
+    if (px >= 1.0) {
+      px -= 1.0;
+    }
+    
+    if (py >= 1.0) {
+      py -= 1.0;
+    }
     vertex(x, y);
   }
+  
   endShape();
 }
 
@@ -84,6 +113,8 @@ float keyboardRows, float keyboardColumns, float trackpadPaddingPercent, float s
   translate(width / 2, height / 2);
   translate(x, y);
   rotate(r);
+  
+  angle = frameCount / 100.0;
 
   float modAngle = angle % (2*PI);
   
@@ -213,19 +244,28 @@ float keyboardRows, float keyboardColumns, float trackpadPaddingPercent, float s
 //    rect(-w/2.0 * (1-screenPaddingPercent), -h * (1-screenPaddingPercent), w * (1-screenPaddingPercent), h * (1-2*screenPaddingPercent));
   } 
   else {
-    rect(-w/2.0, -h, w, h + keyboardThickness);
+//    rect(-w/2.0, -h, w, h + keyboardThickness);
+    drawPolygon(-w/2.0, -h, w/2.0, -h, w/2.0, keyboardThickness, -w/2.0, keyboardThickness);
   }
 
   popMatrix();
 }
 
 void drawManyLaptops() {
-  for (int i = 0; i < 700; i++) {
+  for (int i = 0; i < 1000; i++) {
     float x = random(-width/2.0, width/2.0);
     float y = random(-height/2.0, height/2.0);
-    float angle = random(0, 2*PI);
-    float w = random(100, 200);
-    float h = random(80, w-10);
+    
+    float angle = 0;
+
+    if ((int) random(3) == 0) {
+      angle = random(7*PI/6.0, 11*PI/6.0);
+    } else {
+      angle = random(PI/6.0, 5*PI/6.0);
+    }
+    
+    float w = random(50, 80);
+    float h = random(w/2+5, w-10);
     float r = random(-PI/6, PI/6);
 
     float keyboardPaddingPercent = random(0.03, 0.10);
@@ -244,10 +284,9 @@ void drawManyLaptops() {
   }
 }
 
-void drawOneLaptop() {
   float x = 0;
   float y = 0;
-  float angle = PI/4.0;
+  float angle = random(PI/6.0);
   float w = random(300, 400);
   float h = random(200, w-10);
   float r = 0;
@@ -262,15 +301,45 @@ void drawOneLaptop() {
 
   float screenPaddingPercent = random(0.05, 0.15);
 
+
+
+void drawOneLaptop() {
+//  float x = 0;
+//  float y = 0;
+//  float angle = random(PI/6.0);
+//  float w = random(300, 400);
+//  float h = random(200, w-10);
+//  float r = 0;
+//
+//  float keyboardPaddingPercent = random(0.03, 0.10);
+//  float keyboardSizePercent = random(0.4, 0.6);
+//
+//  float keyboardThickness = random(5, 10);
+//  float keyboardRows = (int) random(3, 6);
+//  float keyboardColumns = (int) random(8, 15);
+//  float trackpadPaddingPercent = random(0.05, 0.1);
+//
+//  float screenPaddingPercent = random(0.05, 0.15);
+//
   drawLaptop(x, y, angle, w, h, r, 
   keyboardPaddingPercent, keyboardSizePercent, keyboardThickness, 
   keyboardRows, keyboardColumns, trackpadPaddingPercent, screenPaddingPercent);
 }
 
 void draw() {
+  long time = System.currentTimeMillis();
+//  beginRecord(PDF, "manyLaptops" + time + ".pdf");
   background(#FFFFFF);
 
-//  drawOneLaptop();
-  drawManyLaptops();
+  drawOneLaptop();
+//  drawManyLaptops();
+//  drawLaptopsAndCoffee();
+  
+  noFill();
+  rect(0, 0, width, height);
+  
+  endRecord();
+  
+//  save("manyLaptops" + time + ".tif");
 }
 

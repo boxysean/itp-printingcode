@@ -9,6 +9,7 @@ PGraphics gLaptopz;
 
 boolean drawAgain = true;
 boolean clearLaptops = false;
+boolean savePNG = false;
 
 void controlEvent(ControlEvent e) {
   if (e.isFrom("width")) {
@@ -38,6 +39,8 @@ void controlEvent(ControlEvent e) {
   } else if (e.isFrom("screenPaddingPercent")) {
     screenPaddingPercentMin = e.getController().getArrayValue(0);
     screenPaddingPercentMax = e.getController().getArrayValue(1);
+  } else if (e.isFrom("savePNG")) {
+    gLaptopz.save("laptopz-" + System.currentTimeMillis() + ".png");
   }
 }
 
@@ -69,6 +72,8 @@ float trackpadPaddingPercentMax = 0.05;
 
 float screenPaddingPercentMin = 0.05;
 float screenPaddingPercentMax = 0.15;
+
+float strokeWeight = 1.0;
 
 
 void setup() {
@@ -135,8 +140,14 @@ void setup() {
 
   cp5y += 40;
 
+  cp5.addSlider("strokeWeight").setBroadcast(false).setPosition(50, cp5y).setSize(200, 30)
+    .setRange(0, 5).setValue(strokeWeight).setBroadcast(true);
+
+  cp5y += 40;
+
   cp5.addButton("drawAgain").setPosition(50, cp5y).setSize(60,30).setOn();
   cp5.addButton("clearLaptops").setPosition(120, cp5y).setSize(60,30).setOn();
+  cp5.addButton("savePNG").setPosition(190, cp5y).setSize(60,30).setOn();
 
   smooth();
 }
@@ -376,6 +387,8 @@ float keyboardRows, float keyboardColumns, float trackpadPaddingPercent, float s
 }
 
 void drawManyLaptops(PGraphics pg) {
+  gLaptopz.strokeWeight(strokeWeight);
+
   for (int i = 0; i < laptops; i++) {
     float x = random(-width/2.0, width/2.0);
     float y = random(-height/2.0, height/2.0);
